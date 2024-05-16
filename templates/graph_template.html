@@ -1,0 +1,44 @@
+{% load static %} 
+<html>
+<head>
+    <script src="https://cdn.canvasjs.com/ga/canvasjs.min.js"></script>
+    <script>
+        window.onload = function () {
+            // 초기 그래프 그리기
+            renderGraph();
+            
+            // 5초마다 그래프 업데이트
+            setInterval(renderGraph, 5000);
+        }
+
+        // 그래프를 그리고 업데이트하는 함수
+        function renderGraph() {
+            // AJAX를 통해 새로운 데이터 가져오기
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "{% url 'chart-data' %}", true); // 백엔드에서 데이터를 가져오는 API 엔드포인트에 대한 URL 설정
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    // 데이터를 JSON으로 파싱하여 그래프 업데이트
+                    var chartData = JSON.parse(decodeURIComponent("{{ chart_data_json|escapejs }}"));
+                    var dataPoints = [];
+                    for (var i = 0; i < chartData.labels.length; i++) {
+                        var value = parseFloat(chartData.values[i]);
+                        dataPoints.push({ x: chartData.labels[i], y: value });
+                    }
+                    var chart = new CanvasJS.Chart("chartContainer", {
+                        theme: "light2",
+                        title: { text: "RSSI Data" },
+                        axisY: { title: "RSSI Value" },
+                        data: [{ type: "line", dataPoints: dataPoints }]
+                    });
+                    chart.render();
+                }
+            };
+            xhr.send();
+        }
+    </script>
+</head>
+<body>
+    <div id="chartContainer" style="height: 300px; width: 100%;"></div>
+</body>
+</html>
